@@ -1,0 +1,3 @@
+recursive-include src/scaffld/builtins *
+include LICENSE
+include README.md

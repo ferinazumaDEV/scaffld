@@ -1,0 +1,4 @@
+[template]
+name = "python-api"
+kind = "api"
+description = "FastAPI service with a health route, typed handlers, and CI."

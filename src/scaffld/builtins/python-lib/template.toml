@@ -1,0 +1,4 @@
+[template]
+name = "python-lib"
+kind = "library"
+description = "Importable Python library: src/ layout, typed API, tests, and CI."

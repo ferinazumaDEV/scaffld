@@ -1,0 +1,4 @@
+[template]
+name = "python-cli"
+kind = "cli"
+description = "Zero-dependency argparse CLI with a console-script entry point."

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{ project_slug }}"
+version = "0.1.0"
+description = "{{ description }}"
+readme = "README.md"
+requires-python = ">={{ python_version }}"
+license = { text = "{{ license }}" }
+authors = [{ name = "{{ author }}"{% if has_email %}, email = "{{ author_email }}"{% endif %} }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Console",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+{{ project_slug }} = "{{ package_name }}.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

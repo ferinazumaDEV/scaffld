@@ -1,0 +1,165 @@
+# scaffld
+
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+![License: MIT](https://img.shields.io/badge/License-MIT-green)
+
+**Scaffold a new, fully-wired Python project in seconds — with a friendly terminal UI.**
+
+`scaffld` generates a clean project skeleton (src layout, tests, typed code, CI,
+pre-commit, license, and an optional virtualenv) from extensible templates. No
+cookiecutter YAML to memorize, no `{% raw %}` gymnastics to keep GitHub Actions
+files intact — just answer a few prompts and start writing code.
+
+```bash
+pip install scaffld
+scaffld new
+```
+
+## Features
+
+- **Interactive TUI** built with [Rich](https://github.com/Textualize/rich) — pick a
+  template from a table, confirm a summary, watch the file tree appear.
+- **Batteries included** — every project ships with `pyproject.toml`, a `src/` layout,
+  `pytest` tests that pass out of the box, a GitHub Actions matrix CI, a
+  `.pre-commit-config.yaml`, a real `LICENSE`, and a sensible `.gitignore`.
+- **Three built-in templates** — `python-lib`, `python-cli`, and `python-api` (FastAPI).
+- **GitHub-Actions-safe templating** — a tiny custom engine leaves `${{ ... }}`
+  expressions untouched, so your workflow files render correctly with zero escaping.
+- **Extensible** — drop your own template folder in `~/.scaffld/templates` and it shows
+  up instantly. Templates are just a `template.toml` plus a `files/` tree.
+- **Scriptable** — `--no-input` makes `scaffld` behave in CI and Makefiles.
+- **Zero-config virtualenv** — optionally creates `.venv` for the new project.
+
+## Install
+
+```bash
+pip install scaffld
+# or, from a clone:
+pip install -e ".[dev]"
+```
+
+Requires Python 3.9+. Runtime dependencies: `typer` and `rich` (plus `tomli` on 3.9/3.10).
+
+## Usage
+
+List the available templates:
+
+```console
+$ scaffld list
+                              Available templates
+┏━━━┳━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ # ┃ Template   ┃ Kind    ┃ Description                                       ┃
+┡━━━╇━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 1 │ python-api │ api     │ FastAPI service with a health route, typed        │
+│   │            │         │ handlers, and CI.                                 │
+│ 2 │ python-cli │ cli     │ Zero-dependency argparse CLI with a               │
+│   │            │         │ console-script entry point.                       │
+│ 3 │ python-lib │ library │ Importable Python library: src/ layout, typed     │
+│   │            │         │ API, tests, and CI.                               │
+└───┴────────────┴─────────┴───────────────────────────────────────────────────┘
+```
+
+Create a project. Run `scaffld new` with no arguments for the full interactive flow,
+or pass flags to skip the prompts:
+
+```console
+$ scaffld new "Weather Bot" -t python-cli -a "Ada Lovelace" -d "A tiny weather CLI."
+weather-bot/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── .gitignore
+├── .pre-commit-config.yaml
+├── LICENSE
+├── README.md
+├── pyproject.toml
+├── src/
+│   └── weather_bot/
+│       ├── __init__.py
+│       └── cli.py
+└── tests/
+    └── test_cli.py
+╭──────────────────────────────────── Done ────────────────────────────────────╮
+│ Created 9 files in /tmp/weather-bot                                           │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Next steps:
+  cd weather-bot
+  pip install -e ".[dev]"
+  pytest
+```
+
+The generated project is real and works immediately:
+
+```console
+$ cd weather-bot && pip install -e ".[dev]" && pytest -q
+...                                                                        [100%]
+3 passed in 0.01s
+
+$ weather-bot Fernando
+Hello, Fernando!
+```
+
+### Useful flags
+
+| Flag | Meaning |
+| --- | --- |
+| `-t, --type` | Template to use (`scaffld list`). |
+| `-a, --author` | Author name (defaults to `git config user.name`). |
+| `-l, --license` | `MIT`, `BSD-3-Clause`, `ISC`, or `none`. |
+| `-o, --output` | Directory to create the project in. |
+| `--python` | Minimum Python version for the generated project. |
+| `--no-venv` | Skip virtualenv creation. |
+| `--no-input` | Never prompt — fail if a required value is missing (great for CI). |
+| `--force` | Write into a non-empty directory. |
+
+## How it works
+
+A template is just a directory:
+
+```
+my-template/
+├── template.toml        # name, kind, description
+└── files/               # the tree that gets rendered
+    ├── pyproject.toml
+    ├── src/{{ package_name }}/__init__.py
+    └── ...
+```
+
+Both **file contents and path segments** are rendered, so a directory literally named
+`{{ package_name }}` becomes `weather_bot/` on disk.
+
+The rendering engine is deliberately small and has one property that matters for real
+projects: **unknown `{{ ... }}` expressions are left untouched.** That means a GitHub
+Actions file can contain `${{ matrix.python-version }}` right next to a scaffld variable
+like `{{ project_name }}`, and only the latter is substituted — no escaping required. It
+also supports filters (`{{ project_name | snake }}`) and nestable conditionals
+(`{% if has_license %}...{% endif %}`).
+
+Derived variables are computed once and kept consistent: give it `"Weather Bot"` and you
+get `package_name = weather_bot`, `project_slug = weather-bot`, a filled-in license, the
+year, and more.
+
+## Custom templates
+
+Point `scaffld` at your own templates by dropping them in `~/.scaffld/templates/`
+(or any directory listed in the `SCAFFLD_TEMPLATES` environment variable). A user
+template that shares a name with a built-in one shadows it, so you can override the
+defaults. Available variables include `project_name`, `package_name`, `project_slug`,
+`author`, `author_email`, `description`, `license`, `python_version`, and `year`.
+
+## Development
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+Built by Fernando ([@ferinazuma](https://github.com/ferinazuma)) — available for custom automation, scraping & bot work.
