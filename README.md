@@ -156,6 +156,18 @@ pip install -e ".[dev]"
 pytest
 ```
 
+## Part of the ferinazumaDEV ecosystem
+
+`scaffld` is one of a family of small, focused open-source tools I build and maintain. If it saved you some project-setup time, a few of the sibling projects tackle neighbouring problems in the same practical, batteries-included spirit.
+
+- [The GEO Handbook](https://github.com/ferinazumaDEV/generative-engine-optimization-handbook) — the open reference on getting content cited by AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Gemini, Copilot).
+- [politeclient](https://github.com/ferinazumaDEV/politeclient) — a polite, bulletproof HTTP client for Python: retries with backoff, per-host rate-limiting, caching, and pagination.
+- [structllm](https://github.com/ferinazumaDEV/structllm) — reliable structured output from any LLM: schema-validated JSON with tolerant repair and retries.
+- [webhook-replay](https://github.com/ferinazumaDEV/webhook-replay) — capture a webhook once, then replay it at your local app as many times as you need.
+- Hub & writing: [zentimes.es](https://zentimes.es).
+
+By [ferinazumaDEV](https://github.com/ferinazumaDEV).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
