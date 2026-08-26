@@ -9,7 +9,7 @@ description = "Scaffold new Python projects in seconds with a friendly TUI."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "Fernando (ferinazuma)" }]
+authors = [{ name = "Fernando Aporta Franco (ferinazumaDEV)" }]
 keywords = [
     "scaffold",
     "boilerplate",
@@ -45,9 +45,9 @@ dev = ["pytest>=8.0"]
 scaffld = "scaffld.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/ferinazuma/scaffld"
-Source = "https://github.com/ferinazuma/scaffld"
-Issues = "https://github.com/ferinazuma/scaffld/issues"
+Homepage = "https://github.com/ferinazumaDEV/scaffld"
+Source = "https://github.com/ferinazumaDEV/scaffld"
+Issues = "https://github.com/ferinazumaDEV/scaffld/issues"
 
 [tool.setuptools]
 include-package-data = true
