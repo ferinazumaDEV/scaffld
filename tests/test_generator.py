@@ -1,4 +1,5 @@
 import py_compile
+import sys
 
 import pytest
 
@@ -106,3 +107,43 @@ def test_rendered_path_cannot_escape_target(tmp_path):
         generate(template, ctx, target)
     assert not (tmp_path / "out" / "x.txt").exists()
     assert not (tmp_path / "x.txt").exists()
+
+
+if sys.version_info >= (3, 11):  # pragma: no cover - version branch
+    import tomllib
+else:  # pragma: no cover - version branch
+    import tomli as tomllib
+
+
+@pytest.mark.parametrize("template_name", ["python-lib", "python-cli", "python-api"])
+@pytest.mark.parametrize("license_id", ["MIT", "BSD-3-Clause", "ISC"])
+def test_generated_pyproject_uses_spdx_license(tmp_path, template_name, license_id):
+    """PEP 639 expression, not the deprecated `license = { text = ... }` table."""
+    template = templates.get(template_name)
+    ctx = ProjectContext.build(
+        "Demo X", author="Ada", license=license_id, template=template_name
+    )
+    result = generate(template, ctx, tmp_path / "out")
+    raw = (result.target / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert "{ text =" not in raw
+    parsed = tomllib.loads(raw)
+    assert parsed["project"]["license"] == license_id
+    assert parsed["project"]["license-files"] == ["LICENSE"]
+    assert (result.target / "LICENSE").is_file()
+
+
+@pytest.mark.parametrize("template_name", ["python-lib", "python-cli", "python-api"])
+def test_generated_pyproject_omits_license_when_none(tmp_path, template_name):
+    """`-l none` used to declare `license = { text = "none" }` -- bogus metadata."""
+    template = templates.get(template_name)
+    ctx = ProjectContext.build(
+        "Demo X", author="Ada", license="none", template=template_name
+    )
+    result = generate(template, ctx, tmp_path / "out")
+    raw = (result.target / "pyproject.toml").read_text(encoding="utf-8")
+
+    parsed = tomllib.loads(raw)
+    assert "license" not in parsed["project"]
+    assert "license-files" not in parsed["project"]
+    assert not (result.target / "LICENSE").exists()
