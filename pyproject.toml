@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Fernando Aporta Franco (ferinazumaDEV)" }]
+authors = [{ name = "Fernando Aporta Franco" }]
 keywords = [
     "scaffold",
     "boilerplate",
