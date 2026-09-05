@@ -11,7 +11,7 @@ cookiecutter YAML to memorize, no `{% raw %}` gymnastics to keep GitHub Actions
 files intact — just answer a few prompts and start writing code.
 
 ```bash
-pip install scaffld
+pip install git+https://github.com/ferinazumaDEV/scaffld
 scaffld new
 ```
 
@@ -33,10 +33,13 @@ scaffld new
 ## Install
 
 ```bash
-pip install scaffld
+pip install git+https://github.com/ferinazumaDEV/scaffld
 # or, from a clone:
 pip install -e ".[dev]"
 ```
+
+Installing from the repository needs `git` on your machine; `scaffld` is not on
+PyPI yet, so `pip install scaffld` will not find it.
 
 Requires Python 3.9+. Runtime dependencies: `typer` and `rich` (plus `tomli` on 3.9/3.10).
 
@@ -63,7 +66,7 @@ Create a project. Run `scaffld new` with no arguments for the full interactive f
 or pass flags to skip the prompts:
 
 ```console
-$ scaffld new "Weather Bot" -t python-cli -a "Ada Lovelace" -d "A tiny weather CLI."
+$ scaffld new "Weather Bot" -t python-cli -a "Ada Lovelace" -d "A tiny weather CLI." --no-input --no-venv
 weather-bot/
 ├── .github/
 │   └── workflows/
@@ -80,7 +83,7 @@ weather-bot/
 └── tests/
     └── test_cli.py
 ╭──────────────────────────────────── Done ────────────────────────────────────╮
-│ Created 9 files in /tmp/weather-bot                                           │
+│ Created 9 files in /tmp/weather-bot                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
 Next steps:
@@ -88,6 +91,9 @@ Next steps:
   pip install -e ".[dev]"
   pytest
 ```
+
+`scaffld show python-lib` prints the file tree a template would generate, without
+writing anything to disk.
 
 The generated project is real and works immediately:
 
@@ -105,13 +111,17 @@ Hello, Fernando!
 | Flag | Meaning |
 | --- | --- |
 | `-t, --type` | Template to use (`scaffld list`). |
-| `-a, --author` | Author name (defaults to `git config user.name`). |
+| `-a, --author` | Author name (defaults to `SCAFFLD_AUTHOR`, then `git config user.name`, then `$USER`). |
+| `--email` | Author email (defaults to `SCAFFLD_EMAIL`, then `git config user.email`). |
+| `-d, --description` | One-line project description. |
 | `-l, --license` | `MIT`, `BSD-3-Clause`, `ISC`, or `none`. |
-| `-o, --output` | Directory to create the project in. |
-| `--python` | Minimum Python version for the generated project. |
-| `--no-venv` | Skip virtualenv creation. |
+| `-o, --output` | Directory to create the project in (defaults to the current directory). |
+| `--python` | Minimum Python version for the generated project (`3.N` or `3.N.P`). |
+| `--venv` / `--no-venv` | Create a `.venv` in the new project. On by default. |
 | `--no-input` | Never prompt — fail if a required value is missing (great for CI). |
 | `--force` | Write into a non-empty directory. |
+
+`scaffld -V` (or `--version`) prints the version and exits.
 
 ## How it works
 
@@ -138,7 +148,9 @@ also supports filters (`{{ project_name | snake }}`) and nestable conditionals
 
 Derived variables are computed once and kept consistent: give it `"Weather Bot"` and you
 get `package_name = weather_bot`, `project_slug = weather-bot`, a filled-in license, the
-year, and more.
+year, and more. Names are transliterated to ASCII first, so `"Café Búho"` yields
+`cafe_buho` rather than a shredded `caf_b_ho`, and a name that collides with a Python
+keyword gets a trailing underscore (`class` → `class_`) so the package stays importable.
 
 ## Custom templates
 
