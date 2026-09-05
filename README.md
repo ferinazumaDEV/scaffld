@@ -11,7 +11,7 @@ cookiecutter YAML to memorize, no `{% raw %}` gymnastics to keep GitHub Actions
 files intact — just answer a few prompts and start writing code.
 
 ```bash
-pip install git+https://github.com/ferinazumaDEV/scaffld
+pip install scaffld
 scaffld new
 ```
 
@@ -33,7 +33,7 @@ scaffld new
 ## Install
 
 ```bash
-pip install git+https://github.com/ferinazumaDEV/scaffld
+pip install scaffld
 # or, from a clone:
 pip install -e ".[dev]"
 ```
