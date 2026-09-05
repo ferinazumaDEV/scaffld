@@ -1,4 +1,7 @@
 import py_compile
+import subprocess
+import sys
+from pathlib import Path
 
 from typer.testing import CliRunner
 
@@ -173,3 +176,92 @@ def test_new_no_input_rejects_blank_name(tmp_path):
     )
     assert result.exit_code == 1
     assert "requires a project NAME" in result.output
+
+
+def test_new_creates_a_virtualenv_by_default(tmp_path, monkeypatch):
+    """`--venv` is the default, and it had no coverage at all."""
+    calls = []
+
+    def fake_create_virtualenv(target_dir):
+        calls.append(Path(target_dir))
+        path = Path(target_dir) / ".venv"
+        path.mkdir(parents=True)
+        return path
+
+    # cli.py imports the name directly, so patch it there.
+    monkeypatch.setattr("scaffld.cli.create_virtualenv", fake_create_virtualenv)
+
+    result = runner.invoke(
+        app, ["new", "Venv Demo", "-t", "python-lib", "--no-input", "-o", str(tmp_path)]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert calls == [tmp_path / "venv-demo"]
+    assert "Virtualenv" in result.output
+    assert "source .venv/bin/activate" in result.output
+
+
+def test_no_venv_skips_the_virtualenv(tmp_path, monkeypatch):
+    def explode(target_dir):  # pragma: no cover - must never run
+        raise AssertionError("create_virtualenv called with --no-venv")
+
+    monkeypatch.setattr("scaffld.cli.create_virtualenv", explode)
+
+    result = runner.invoke(
+        app,
+        [
+            "new",
+            "No Venv",
+            "-t",
+            "python-lib",
+            "--no-input",
+            "--no-venv",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "source .venv/bin/activate" not in result.output
+
+
+def test_interactive_template_choice_by_number(tmp_path):
+    """The numbered shortcut in the template picker was never exercised."""
+    # Templates are listed sorted; "1" is python-api.
+    answers = "\n".join(["Numbered", "1", "Ada", "", "A demo", "MIT", "y"])
+    result = runner.invoke(
+        app, ["new", "--no-venv", "--output", str(tmp_path)], input=answers + "\n"
+    )
+    assert result.exit_code == 0, result.output
+    pyproject = (tmp_path / "numbered" / "pyproject.toml").read_text(encoding="utf-8")
+    assert "fastapi" in pyproject  # i.e. python-api, the first name in sort order
+
+
+def test_python_dash_m_entrypoint():
+    """`python -m scaffld` goes through __main__.py, which had 0% coverage."""
+    result = subprocess.run(
+        [sys.executable, "-m", "scaffld", "--version"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.startswith("scaffld ")
+    assert __version__ in result.stdout
+
+
+def test_new_venv_without_a_terminal(tmp_path, monkeypatch):
+    """The non-tty leg of the venv branch skips the Rich status spinner."""
+    from rich.console import Console
+
+    monkeypatch.setattr("scaffld.cli.console", Console(force_terminal=False, width=100))
+    monkeypatch.setattr(
+        "scaffld.cli.create_virtualenv", lambda target: Path(target) / ".venv"
+    )
+
+    result = runner.invoke(
+        app, ["new", "Plain Venv", "-t", "python-lib", "--no-input", "-o", str(tmp_path)]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Virtualenv" in result.output

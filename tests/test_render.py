@@ -61,3 +61,25 @@ def test_condition_helpers():
 def test_unclosed_if_raises():
     with pytest.raises(TemplateError):
         render_string("{% if a %}oops", {"a": True})
+
+
+def test_unexpected_tag_raises():
+    # A stray endif never opened by an `if`.
+    with pytest.raises(TemplateError, match="unexpected tag"):
+        render_string("a{% endif %}b", {})
+    with pytest.raises(TemplateError, match="unexpected tag"):
+        render_string("{% for x in y %}", {})
+
+
+def test_unclosed_else_raises():
+    with pytest.raises(TemplateError, match="unclosed"):
+        render_string("{% if a %}yes{% else %}no", {"a": True})
+
+
+def test_render_error_is_the_canonical_name():
+    # render.TemplateError is an alias kept for backwards compatibility; the
+    # class is RenderError so it no longer collides with templates.TemplateError.
+    from scaffld import render, templates
+
+    assert render.TemplateError is render.RenderError
+    assert render.RenderError is not templates.TemplateError

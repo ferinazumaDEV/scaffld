@@ -3,9 +3,9 @@ import sys
 
 import pytest
 
-from scaffld import templates
+from scaffld import licenses, templates
 from scaffld.context import ProjectContext
-from scaffld.generator import GenerationError, generate
+from scaffld.generator import GenerationError, create_virtualenv, generate
 
 
 def _all_templates():
@@ -147,3 +147,20 @@ def test_generated_pyproject_omits_license_when_none(tmp_path, template_name):
     assert "license" not in parsed["project"]
     assert "license-files" not in parsed["project"]
     assert not (result.target / "LICENSE").exists()
+
+
+@pytest.mark.parametrize("license_id", licenses.CHOICES)
+def test_every_license_choice_renders(license_id):
+    text = licenses.render_license(license_id, "Ada Lovelace", 2026)
+    if license_id == "none":
+        assert text == ""
+    else:
+        assert "Ada Lovelace" in text
+        assert "2026" in text
+
+
+def test_create_virtualenv(tmp_path):
+    # with_pip=False keeps this fast; the layout is what matters.
+    venv_path = create_virtualenv(tmp_path, with_pip=False)
+    assert venv_path == tmp_path / ".venv"
+    assert (venv_path / "pyvenv.cfg").is_file()
