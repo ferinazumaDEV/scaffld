@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -17,7 +18,12 @@ from rich.tree import Tree
 from . import __version__, licenses
 from .context import ProjectContext
 from .generator import GenerationError, create_virtualenv, generate
+from .render import RenderError
 from .templates import Template, TemplateError, discover, get
+
+#: `requires-python = ">={{ python_version }}"` has to stay a valid PEP 508
+#: specifier, so only "3.N" and "3.N.P" are accepted.
+_PYTHON_VERSION_RE = re.compile(r"3\.\d{1,2}(\.\d+)?")
 
 app = typer.Typer(
     add_completion=False,
@@ -142,8 +148,11 @@ def new(
         None, "--license", "-l", help=f"One of: {', '.join(licenses.CHOICES)}."
     ),
     python_version: str = typer.Option("3.9", "--python", help="Minimum Python."),
-    output: Path = typer.Option(
-        Path.cwd(), "--output", "-o", help="Directory to create the project in."
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Directory to create the project in (default: current directory).",
     ),
     venv: bool = typer.Option(True, "--venv/--no-venv", help="Create a .venv."),
     force: bool = typer.Option(False, "--force", help="Write into a non-empty dir."),
@@ -152,12 +161,18 @@ def new(
     ),
 ) -> None:
     """Create a new project from a template."""
+    # Evaluated here, not in the default above: `Path.cwd()` in a Typer default
+    # is frozen at import time and would ignore any later chdir.
+    output = output or Path.cwd()
+    if not _PYTHON_VERSION_RE.fullmatch(python_version):
+        raise _abort(f"--python must look like 3.N (e.g. 3.11), got {python_version!r}")
+
     templates = discover()
     if not templates:
         raise _abort("no templates available")
 
     if no_input:
-        if not name:
+        if not (name and name.strip()):
             raise _abort("--no-input requires a project NAME")
         if not template:
             raise _abort("--no-input requires --type")
@@ -172,7 +187,8 @@ def new(
                 border_style="cyan",
             )
         )
-        name = name or Prompt.ask("Project name")
+        while not (name and name.strip()):
+            name = Prompt.ask("Project name")
         template = template or _choose_template(templates)
         resolved_author = author or Prompt.ask("Author", default=_default_author())
         resolved_email = email or Prompt.ask(
@@ -185,6 +201,7 @@ def new(
             "License", choices=list(licenses.CHOICES), default=licenses.DEFAULT
         )
 
+    name = name.strip()
     if template not in templates:
         raise _abort(
             f"unknown template {template!r}; available: {', '.join(sorted(templates))}"
@@ -223,7 +240,7 @@ def new(
 
     try:
         result = generate(templates[template], context, target, force=force)
-    except GenerationError as exc:
+    except (GenerationError, RenderError) as exc:
         raise _abort(str(exc))
 
     if venv:

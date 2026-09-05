@@ -80,3 +80,29 @@ def test_context_derives_names():
     assert ctx.package_name == "my_cool_thing"
     assert ctx.project_slug == "my-cool-thing"
     assert "MIT License" in ctx.license_text
+
+
+def test_refuses_target_that_is_a_file(tmp_path):
+    # Used to die with NotADirectoryError from iterdir(); must be a clean error.
+    template = templates.get("python-lib")
+    ctx = ProjectContext.build("X", author="Ada", template="python-lib")
+    target = tmp_path / "out"
+    target.write_text("i am a file")
+    with pytest.raises(GenerationError, match="not a directory"):
+        generate(template, ctx, target)
+
+
+def test_rendered_path_cannot_escape_target(tmp_path):
+    """A template variable used as a path segment must stay inside the target."""
+    tpl = tmp_path / "tpl" / "esc"
+    (tpl / "files").mkdir(parents=True)
+    (tpl / "template.toml").write_text('[template]\nname = "esc"\n', encoding="utf-8")
+    (tpl / "files" / "{{ author }}.txt").write_text("hi\n", encoding="utf-8")
+
+    template = templates.Template(name="esc", description="", kind="generic", path=tpl)
+    ctx = ProjectContext.build("Zed", author="../x", template="esc")
+    target = tmp_path / "out" / "zed"
+    with pytest.raises(GenerationError, match="escapes the target directory"):
+        generate(template, ctx, target)
+    assert not (tmp_path / "out" / "x.txt").exists()
+    assert not (tmp_path / "x.txt").exists()

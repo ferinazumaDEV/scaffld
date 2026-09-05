@@ -72,3 +72,104 @@ def test_new_interactive_flow(tmp_path):
     )
     assert result.exit_code == 0, result.output
     assert (tmp_path / "inter-active" / "pyproject.toml").is_file()
+
+
+def test_list_survives_a_broken_user_template(tmp_path, monkeypatch):
+    """A malformed manifest used to crash every command with a traceback."""
+    broken = tmp_path / "broken"
+    (broken / "files").mkdir(parents=True)
+    (broken / "template.toml").write_text('[template\nname = "x"\n', encoding="utf-8")
+    monkeypatch.setenv("SCAFFLD_TEMPLATES", str(tmp_path))
+
+    result = runner.invoke(app, ["list"])
+
+    assert result.exit_code == 0, result.output
+    assert "python-lib" in result.output
+
+
+def test_new_reports_render_errors_cleanly(tmp_path):
+    """A bad filter in a user template is an `error:`, not a Rich traceback."""
+    tpl = tmp_path / "tpl" / "bad"
+    (tpl / "files").mkdir(parents=True)
+    (tpl / "template.toml").write_text('[template]\nname = "bad"\n', encoding="utf-8")
+    (tpl / "files" / "x.txt").write_text("{{ author | nope }}", encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        ["new", "Z", "-t", "bad", "--no-input", "--no-venv", "-o", str(tmp_path / "o")],
+        env={"SCAFFLD_TEMPLATES": str(tmp_path / "tpl")},
+    )
+
+    assert result.exit_code == 1
+    assert "unknown filter" in result.output
+    assert result.exception is None or isinstance(result.exception, SystemExit)
+
+
+def test_new_rejects_bad_python_version(tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "new",
+            "X",
+            "-t",
+            "python-lib",
+            "--python",
+            "banana",
+            "--no-input",
+            "--no-venv",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 1
+    assert "--python must look like" in result.output
+
+
+def test_new_accepts_patch_level_python_version(tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "new",
+            "X",
+            "-t",
+            "python-lib",
+            "--python",
+            "3.9.1",
+            "--no-input",
+            "--no-venv",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    pyproject = (tmp_path / "x" / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'requires-python = ">=3.9.1"' in pyproject
+
+
+def test_output_defaults_to_cwd_at_call_time(tmp_path, monkeypatch):
+    """`-o` used to default to the directory scaffld was *imported* from."""
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(
+        app, ["new", "P", "-t", "python-lib", "--no-input", "--no-venv"]
+    )
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "p" / "pyproject.toml").is_file()
+
+
+def test_new_reprompts_on_empty_project_name(tmp_path):
+    """An empty name used to be accepted and create `<output>/package`."""
+    answers = "\n".join(["", "  ", "Demo", "python-lib", "Ada", "", "", "MIT", "y"])
+    result = runner.invoke(
+        app, ["new", "--no-venv", "--output", str(tmp_path)], input=answers + "\n"
+    )
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "demo" / "pyproject.toml").is_file()
+    assert not (tmp_path / "package").exists()
+
+
+def test_new_no_input_rejects_blank_name(tmp_path):
+    result = runner.invoke(
+        app, ["new", "   ", "-t", "python-lib", "--no-input", "-o", str(tmp_path)]
+    )
+    assert result.exit_code == 1
+    assert "requires a project NAME" in result.output

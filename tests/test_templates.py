@@ -53,3 +53,19 @@ def test_generate_from_user_template(tmp_path, monkeypatch):
 def test_get_unknown_template_raises():
     with pytest.raises(templates.TemplateError):
         templates.get("nope-not-real")
+
+
+def test_broken_manifest_is_skipped_not_fatal(tmp_path, monkeypatch, capsys):
+    """One malformed user template must not take out every other template."""
+    broken = tmp_path / "broken"
+    (broken / "files").mkdir(parents=True)
+    (broken / "template.toml").write_text('[template\nname = "x"\n', encoding="utf-8")
+    _make_user_template(tmp_path)
+    monkeypatch.setenv("SCAFFLD_TEMPLATES", str(tmp_path))
+
+    found = templates.discover()
+
+    assert "broken" not in found
+    assert "my-custom" in found  # the good ones still load
+    assert "python-lib" in found  # ...and so do the built-ins
+    assert "warning: skipping" in capsys.readouterr().err
