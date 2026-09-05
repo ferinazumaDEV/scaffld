@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,8 +8,9 @@ version = "0.1.0"
 description = "{{ description }}"
 readme = "README.md"
 requires-python = ">={{ python_version }}"
-license = { text = "{{ license }}" }
-authors = [{ name = "{{ author }}"{% if has_email %}, email = "{{ author_email }}"{% endif %} }]
+{% if has_license %}license = "{{ license }}"
+license-files = ["LICENSE"]
+{% endif %}authors = [{ name = "{{ author }}"{% if has_email %}, email = "{{ author_email }}"{% endif %} }]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Environment :: Console",

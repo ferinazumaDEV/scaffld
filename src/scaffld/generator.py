@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import venv
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,10 +26,22 @@ class GenerationResult:
 
 
 def _render_relpath(relative: Path, ctx: dict[str, object]) -> Path | None:
-    """Render each path segment; return ``None`` if any renders empty (skip)."""
+    """Render each path segment; return ``None`` if any renders empty (skip).
+
+    Template variables are user input, so a segment such as ``{{ author }}`` can
+    render to ``../../escaped``. Reject any segment that is ``..`` or that
+    carries a path separator, naming the offending one.
+    """
     parts = [render_string(part, ctx) for part in relative.parts]
     if any(part == "" for part in parts):
         return None
+    separators = [sep for sep in (os.sep, os.altsep) if sep]
+    for part in parts:
+        if part == ".." or any(sep in part for sep in separators):
+            raise GenerationError(
+                f"template path escapes the target directory: {part!r} "
+                f"(rendered from {relative.as_posix()!r})"
+            )
     return Path(*parts)
 
 
@@ -46,6 +59,8 @@ def generate(
     name pairs with ``license == "none"`` is skipped.
     """
     target_dir = target_dir.resolve()
+    if target_dir.exists() and not target_dir.is_dir():
+        raise GenerationError(f"target path exists and is not a directory: {target_dir}")
     if target_dir.exists() and any(target_dir.iterdir()) and not force:
         raise GenerationError(f"target directory is not empty: {target_dir}")
 
@@ -67,6 +82,11 @@ def generate(
             data = source.read_bytes()  # binary asset: copy verbatim
 
         destination = target_dir / rendered_rel
+        if not destination.resolve().is_relative_to(target_dir):
+            raise GenerationError(
+                "template path escapes the target directory: "
+                f"{rendered_rel.as_posix()!r}"
+            )
         if destination.exists() and not force:
             raise GenerationError(f"refusing to overwrite: {destination}")
         destination.parent.mkdir(parents=True, exist_ok=True)

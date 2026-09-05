@@ -67,8 +67,11 @@ def _load_template(path: Path) -> Optional[Template]:
         return None
     try:
         data = tomllib.loads(manifest.read_text(encoding="utf-8"))
-    except tomllib.TOMLDecodeError as exc:  # pragma: no cover - defensive
-        raise TemplateError(f"invalid manifest {manifest}: {exc}") from exc
+    except tomllib.TOMLDecodeError as exc:
+        # One malformed user template must not take down `scaffld list` (and
+        # every other command): warn on stderr and carry on without it.
+        print(f"warning: skipping {manifest}: {exc}", file=sys.stderr)
+        return None
     meta = data.get("template", {})
     name = str(meta.get("name") or path.name)
     return Template(

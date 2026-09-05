@@ -25,8 +25,13 @@ from . import naming
 FilterFn = Callable[[str], str]
 
 
-class TemplateError(ValueError):
+class RenderError(ValueError):
     """Raised when a template is malformed (bad tag, unclosed ``if``, ...)."""
+
+
+#: Backwards-compatible alias. Prefer :class:`RenderError`: ``templates`` has an
+#: unrelated ``TemplateError`` and the two used to be easy to confuse.
+TemplateError = RenderError
 
 
 _FILTERS: dict[str, FilterFn] = {
