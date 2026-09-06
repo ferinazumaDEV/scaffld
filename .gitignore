@@ -7,9 +7,16 @@ build/
 dist/
 
 # Virtual environments
+# Match any dot-prefixed venv, not just the three names we happened to think of:
+# a venv created as `.v` slipped past this list once and 1,380 files landed in
+# main. The trailing-slash entries below stay for the non-dot spellings.
 .venv/
 venv/
 env/
+.v/
+.env/
+.virtualenv/
+pyvenv.cfg
 
 # Test & coverage
 .pytest_cache/
