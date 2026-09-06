@@ -84,3 +84,45 @@ jobs:
         run: |
           pip install build
           python -m build
+
+  no-vendored-env:
+    # A virtualenv called `.v` was committed to main on 2026-09-06: 1,380 files
+    # and 467,125 lines. .gitignore listed `.venv/`, `venv/` and `env/` but not
+    # that spelling, and a broad `git add` swept it in.
+    #
+    # .gitignore alone cannot prevent a repeat: it does nothing for a path that
+    # is already tracked, and nothing against `git add -f`. So this guard asks
+    # git what it is actually tracking, which is the invariant that matters.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No virtualenv or vendored site-packages may be tracked
+        run: |
+          # Markers, not directory names: an environment is recognisable by what
+          # is inside it whatever it was called.
+          found=$(git ls-files | grep -E '(^|/)(pyvenv\.cfg|site-packages/|dist-packages/)|(^|/)\.?(v|venv|virtualenv)/(bin|lib|Scripts)/' || true)
+          if [ -n "$found" ]; then
+            echo "Tracked files that look like a virtualenv or vendored packages:"
+            echo "$found" | head -20
+            echo "..."
+            echo "$found" | wc -l | xargs echo "total:"
+            echo
+            echo "Remove them with 'git rm -r --cached <dir>' and add the directory to .gitignore."
+            exit 1
+          fi
+          echo "clean: nothing that looks like a vendored environment is tracked"
+
+      - name: The tracked tree stays a sane size
+        # A blunt backstop for the general shape of the mistake — a large tree
+        # arriving at once — for cases the markers above do not name. The repo
+        # tracks 51 files today, so 300 allows it to grow six-fold before this
+        # needs revisiting, and still catches an accident far smaller than the
+        # 1,380 files that prompted it. Raise it deliberately, with a reason.
+        run: |
+          n=$(git ls-files | wc -l)
+          echo "tracked files: $n"
+          if [ "$n" -gt 300 ]; then
+            echo "That is far more than this project should contain. Check what was added."
+            exit 1
+          fi
