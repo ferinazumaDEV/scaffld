@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scaffld"
-version = "0.1.0"
+version = "0.1.1"
 description = "Scaffold new Python projects in seconds with a friendly TUI."
 readme = "README.md"
 requires-python = ">=3.9"
