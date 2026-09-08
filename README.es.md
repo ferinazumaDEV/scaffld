@@ -1,3 +1,4 @@
+<!-- synced-from: 6e32af481bbec8ae4c9ac4504cc41f9be6f11fb5 -->
 # scaffld
 
 **English**: [README.md](README.md) · [Español](README.es.md)
