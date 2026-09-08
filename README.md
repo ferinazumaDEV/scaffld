@@ -1,5 +1,7 @@
 # scaffld
 
+[English](README.md) · **Español**: [README.es.md](README.es.md)
+
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green)
 
@@ -38,8 +40,8 @@ pip install scaffld
 pip install -e ".[dev]"
 ```
 
-Installing from the repository needs `git` on your machine; `scaffld` is not on
-PyPI yet, so `pip install scaffld` will not find it.
+`scaffld` is on PyPI, so `pip install scaffld` works. Installing from a clone
+instead needs `git` on your machine.
 
 Requires Python 3.9+. Runtime dependencies: `typer` and `rich` (plus `tomli` on 3.9/3.10).
 
@@ -173,8 +175,8 @@ pytest
 `scaffld` is one of a family of small, focused open-source tools I build and maintain. If it saved you some project-setup time, a few of the sibling projects tackle neighbouring problems in the same practical, batteries-included spirit.
 
 - [The GEO Handbook](https://github.com/ferinazumaDEV/generative-engine-optimization-handbook) — the open reference on getting content cited by AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Gemini, Copilot).
-- [politeclient](https://github.com/ferinazumaDEV/politeclient) — a polite, bulletproof HTTP client for Python: retries with backoff, per-host rate-limiting, caching, and pagination.
-- [typedout](https://github.com/ferinazumaDEV/typedout) — reliable structured output from any LLM: schema-validated JSON with tolerant repair and retries.
+- [politeclient](https://github.com/ferinazumaDEV/politeclient) — a careful, well-behaved HTTP client for Python: retries with backoff, per-host rate-limiting, caching, and pagination.
+- [typedout](https://github.com/ferinazumaDEV/typedout) — reliable structured output from OpenAI and Anthropic, with a provider interface for others: schema-validated JSON with tolerant repair and retries.
 - [webhook-replay](https://github.com/ferinazumaDEV/webhook-replay) — capture a webhook once, then replay it at your local app as many times as you need.
 - Hub & writing: [zentimes.es](https://zentimes.es).
 
