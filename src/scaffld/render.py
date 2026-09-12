@@ -12,7 +12,14 @@ workflow file. ``scaffld`` sidesteps the whole problem with two rules:
   template to serve several project shapes.
 
 Supported variable filters: ``lower upper title capitalize snake kebab pascal
-camel strip``. Chain them with ``|`` -> ``{{ project_name | snake }}``.
+camel strip toml py``. Chain them with ``|`` -> ``{{ project_name | snake }}``.
+
+The last two are escapers, not transformers. A template that drops a value
+inside quotes is choosing a *grammar*, and TOML, Python and Markdown do not
+share escaping rules -- an author called ``Ana "AI"`` produced an unparseable
+``pyproject.toml`` until these existed. Use ``| toml`` inside a TOML basic
+string and ``| py`` inside a Python string literal. Markdown body text needs
+neither.
 """
 
 from __future__ import annotations
@@ -34,6 +41,44 @@ class RenderError(ValueError):
 TemplateError = RenderError
 
 
+_TOML_ESCAPES = {
+    "\\": "\\\\", '"': '\\"', "\b": "\\b", "\t": "\\t",
+    "\n": "\\n", "\f": "\\f", "\r": "\\r",
+}
+
+
+def toml_string(value: str) -> str:
+    """Escape *value* for the inside of a TOML basic string.
+
+    The surrounding quotes belong to the template, so this returns the body
+    only. Control characters other than the named escapes become ``\\uXXXX``,
+    which TOML requires -- they cannot appear raw.
+    """
+    out = []
+    for ch in value:
+        if ch in _TOML_ESCAPES:
+            out.append(_TOML_ESCAPES[ch])
+        elif ord(ch) < 0x20 or ord(ch) == 0x7F:
+            out.append(f"\\u{ord(ch):04X}")
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
+def python_string(value: str) -> str:
+    """Escape *value* for the inside of a Python string literal.
+
+    Safe inside ``"..."`` and ``\"\"\"...\"\"\"`` alike: every quote is escaped, so a
+    value ending in a quote cannot run into the closing delimiter, and newlines
+    become ``\\n`` rather than splitting the literal.
+    """
+    return (value.replace("\\", "\\\\")
+                 .replace('"', '\\"')
+                 .replace("\n", "\\n")
+                 .replace("\r", "\\r")
+                 .replace("\t", "\\t"))
+
+
 _FILTERS: dict[str, FilterFn] = {
     "lower": str.lower,
     "upper": str.upper,
@@ -44,6 +89,8 @@ _FILTERS: dict[str, FilterFn] = {
     "kebab": naming.kebab_case,
     "pascal": naming.pascal_case,
     "camel": naming.camel_case,
+    "toml": toml_string,
+    "py": python_string,
 }
 
 # ``[^{}]`` keeps a match from ever spanning a ``}}`` boundary, which is what

@@ -11,7 +11,7 @@ from . import __version__
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="{{ project_slug }}",
-        description="{{ description }}",
+        description="{{ description | py }}",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("name", nargs="?", default="world", help="who to greet")

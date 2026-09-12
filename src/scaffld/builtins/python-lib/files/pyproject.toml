@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "{{ project_slug }}"
 version = "0.1.0"
-description = "{{ description }}"
+description = "{{ description | toml }}"
 readme = "README.md"
 requires-python = ">={{ python_version }}"
 {% if has_license %}license = "{{ license }}"
 license-files = ["LICENSE"]
-{% endif %}authors = [{ name = "{{ author }}"{% if has_email %}, email = "{{ author_email }}"{% endif %} }]
+{% endif %}authors = [{ name = "{{ author | toml }}"{% if has_email %}, email = "{{ author_email | toml }}"{% endif %} }]
 keywords = []
 classifiers = [
     "Programming Language :: Python :: 3",

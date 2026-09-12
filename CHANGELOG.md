@@ -4,6 +4,26 @@ Notable changes, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Generated projects no longer break on quotes, backslashes or newlines in the
+  author or description.** Both fields were interpolated into `pyproject.toml`
+  and into Python source as plain text, so any character that is special in the
+  destination grammar produced a project that would not parse. An author called
+  `Ana "AI"` was enough to yield `authors = [{ name = "Ana "AI"" }]` and a
+  `TOMLDecodeError`. Nine of twelve template/input combinations failed; the
+  existing end-to-end test passed throughout, because it generates with one
+  benign name.
+
+  Templates now choose an escaper for the grammar they are writing into:
+  `{{ description | toml }}` inside a TOML basic string, `{{ description | py }}`
+  inside a Python literal, and neither in Markdown body text. Both filters are
+  public and round-trip tested.
+
+Reported in the external audit of the `2026.09.0` ecosystem snapshot as F03.
+
 ## [0.1.1] — 2026-09-06
 
 A release so that what you install contains the guards, not just `main`.
