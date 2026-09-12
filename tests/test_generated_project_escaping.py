@@ -18,11 +18,20 @@ accepts, the generated TOML loads and the generated Python parses.
 from __future__ import annotations
 
 import ast
+import sys
 import tempfile
-import tomllib
 from pathlib import Path
 
 import pytest
+
+# Same shim the package itself uses: tomllib is 3.11+, and scaffld supports 3.9.
+# Importing tomllib directly made this module fail to collect on 3.9 and 3.10 --
+# a test for "the generated file parses" that could not run on two of the five
+# supported versions.
+if sys.version_info >= (3, 11):  # pragma: no cover - version branch
+    import tomllib
+else:  # pragma: no cover - version branch
+    import tomli as tomllib
 
 from scaffld.context import ProjectContext
 from scaffld.generator import generate
