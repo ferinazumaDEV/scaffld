@@ -7,6 +7,9 @@ name = "scaffld"
 version = "0.1.2"
 description = "Scaffold new Python projects in seconds with a friendly TUI."
 readme = "README.md"
+# Version policy: this floor is a minimum, not a recommendation, and everything below 3.11 is
+# compatibility rather than support. 0.2.0 raises the floor to 3.11 (3.10 reaches end of life in
+# October 2026). Nothing changes within 0.1.x.
 requires-python = ">=3.9"
 license = "MIT"
 license-files = ["LICENSE"]
