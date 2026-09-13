@@ -49,6 +49,13 @@ jobs:
         run: pytest -q
 
   generated-project:
+    # The job name is fixed on purpose. With an object-valued matrix GitHub
+    # would name each cell after every property of the object, and the
+    # branch protection requires the exact context `generated-project
+    # (python-lib)` and siblings -- a renamed cell would leave those
+    # required checks pending forever and block every merge. The benign
+    # cells keep the old name; the hostile ones add a suffix.
+    name: generated-project (${{ matrix.template }}${{ matrix.who.label == 'hostile' && ', hostile' || '' }})
     # The suite tests scaffld's internals. This tests what scaffld is FOR: that
     # a project it generates is actually well-formed — installs, and passes the
     # tests scaffld wrote for it. A scaffolder whose output does not build is
