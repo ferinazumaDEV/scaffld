@@ -6,6 +6,8 @@ Notable changes, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-09-13
+
 ### Fixed
 
 - **Generated projects no longer break on quotes, backslashes or newlines in the
